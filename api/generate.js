@@ -24,7 +24,8 @@ async function registerDevice(publicKey) {
   return await res.json();
 }
 
-exports.handler = async () => {
+// Vercel Serverless Function သတ်မှတ်ချက်အတိုင်း ပြင်ရေးထားပါသည်
+module.exports = async (req, res) => {
   try {
     const endpoints = Array.from({ length: 20 }, (_, i) => `162.159.192.${i + 1}`);
     const endpoint = endpoints[Math.floor(Math.random() * endpoints.length)];
@@ -48,21 +49,15 @@ Endpoint = ${endpoint}:500
 PersistentKeepalive = 20
 `;
 
-    return {
-      statusCode: 200,
-      headers: {
-        "Content-Type": "application/octet-stream",
-        "Content-Disposition": `attachment; filename="${endpoint}.conf"`,
-        "X-Content-Type-Options": "nosniff",
-        "Access-Control-Allow-Origin": "*",
-      },
-      body: conf,
-    };
+    // Headers များကို တိုက်ရိုက်သတ်မှတ်ပြီး .conf ဖိုင်ကို ဒေါင်းလုဒ်ချခိုင်းခြင်း
+    res.setHeader("Content-Type", "application/octet-stream");
+    res.setHeader("Content-Disposition", `attachment; filename="${endpoint}.conf"`);
+    res.setHeader("X-Content-Type-Options", "nosniff");
+    res.setHeader("Access-Control-Allow-Origin", "*");
+    
+    return res.status(200).send(conf);
+    
   } catch (err) {
-    return {
-      statusCode: 500,
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ error: err.message }),
-    };
+    return res.status(500).json({ error: err.message });
   }
 };
